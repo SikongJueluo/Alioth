@@ -1,15 +1,22 @@
 import astrbot.api.message_components as Comp
+from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent
 from astrbot.core.utils.session_waiter import (
     SessionController,
     session_waiter,
 )
+from utils.initialize import initialize
+
+
+@initialize()
+async def _initialize_birthday_reminder():
+    logger.info("生日提醒初始化成功...")
 
 
 @session_waiter(
     timeout=60, record_history_chains=False
 )  # 注册一个会话控制器，设置超时时间为 60 秒，不记录历史消息链
-async def empty_mention_waiter(controller: SessionController, event: AstrMessageEvent):
+async def add_birthday_reminder(controller: SessionController, event: AstrMessageEvent):
     idiom = event.message_str  # 用户发来的成语，假设是 "一马当先"
 
     if idiom == "退出":  # 假设用户想主动退出成语接龙，输入了 "退出"
