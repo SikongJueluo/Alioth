@@ -15,7 +15,7 @@ def get_db() -> aiosqlite.Connection:
 
 
 @initialize(priority=2)
-async def init_database():
+async def _init_database():
     global _db
     db = await aiosqlite.connect(config.database_file_path)
     db.row_factory = aiosqlite.Row
@@ -83,7 +83,7 @@ async def delete_birthday(birthday_id: int) -> bool:
 
 
 @terminate(priority=2)
-async def terminate_database():
+async def _terminate_database():
     global _db
     if _db is None:
         return

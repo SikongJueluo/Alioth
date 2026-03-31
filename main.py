@@ -2,6 +2,7 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star, register
 
+from alioth.tools import add_birthday_reminder
 from alioth.utils.initialize import initialize, run_initializations_async
 
 
@@ -27,12 +28,17 @@ class MyPlugin(Star):
         await run_initializations_async()
 
     @filter.command("BirthdayReminder")
-    async def helloworld(self, event: AstrMessageEvent):
+    async def birthday_reminder(self, event: AstrMessageEvent):
         """生日提醒"""
         try:
-            yield event.plain_result("请发送一个成语~")
+            await add_birthday_reminder(event)
+        except TimeoutError:
+            yield event.plain_result("设置超时，已退出生日提醒设置~")
         except Exception as e:
-            logger.error("handle_empty_mention error: " + str(e))
+            logger.exception("生日提醒设置异常")
+            yield event.plain_result(f"发生错误: {e}")
+        finally:
+            event.stop_event()
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
