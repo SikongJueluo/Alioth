@@ -25,61 +25,59 @@ async def init_database():
 
 async def _create_tables():
     db = get_db()
-    await db.executescript("""
-        CREATE TABLE IF NOT EXISTS birthday_reminders (
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS birthdays (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            remindee_id TEXT NOT NULL,
-            group_id TEXT NOT NULL,
-            send_time TEXT NOT NULL,
-            message_content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+            name TEXT NOT NULL,
+            target_session TEXT NOT NULL,
+            month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+            day INTEGER NOT NULL CHECK(day BETWEEN 1 AND 31),
+            message TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
     """)
     await db.commit()
 
 
-# ── Birthday Reminder CRUD ──────────────────────────────────────
+# ── Birthdays CRUD ──────────────────────────────────────────────
 
 
-async def add_birthday_reminder(
-    remindee_id: str,
-    group_id: str,
-    send_time: str,
-    message_content: str,
+async def add_birthday(
+    name: str,
+    target_session: str,
+    month: int,
+    day: int,
+    message: str,
 ) -> int:
     db = get_db()
     cursor = await db.execute(
         """
-        INSERT INTO birthday_reminders (remindee_id, group_id, send_time, message_content)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO birthdays (name, target_session, month, day, message)
+        VALUES (?, ?, ?, ?, ?)
         """,
-        (remindee_id, group_id, send_time, message_content),
+        (name, target_session, month, day, message),
     )
     await db.commit()
     if cursor.lastrowid is None:
-        raise RuntimeError("Failed to insert birthday reminder: no row ID returned")
+        raise RuntimeError("Failed to insert birthday: no row ID returned")
     return cursor.lastrowid
 
 
-async def get_birthday_reminders(
-    remindee_id: Optional[str] = None,
-) -> List[aiosqlite.Row]:
+async def list_birthdays() -> List[aiosqlite.Row]:
     db = get_db()
-    if remindee_id is not None:
-        cursor = await db.execute(
-            "SELECT * FROM birthday_reminders WHERE remindee_id = ? ORDER BY send_time",
-            (remindee_id,),
-        )
-    else:
-        cursor = await db.execute("SELECT * FROM birthday_reminders ORDER BY send_time")
+    cursor = await db.execute(
+        """
+        SELECT id, name, target_session, month, day, message
+        FROM birthdays
+        ORDER BY month, day, id
+        """
+    )
     return list(await cursor.fetchall())
 
 
-async def delete_birthday_reminder(reminder_id: int) -> bool:
+async def delete_birthday(birthday_id: int) -> bool:
     db = get_db()
-    cursor = await db.execute(
-        "DELETE FROM birthday_reminders WHERE id = ?", (reminder_id,)
-    )
+    cursor = await db.execute("DELETE FROM birthdays WHERE id = ?", (birthday_id,))
     await db.commit()
     return cursor.rowcount > 0
 
