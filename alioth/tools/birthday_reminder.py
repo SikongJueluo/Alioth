@@ -6,17 +6,14 @@ from datetime import datetime
 from typing import List, Optional
 
 from astrbot.api import logger
-from astrbot.api.event import AstrMessageEvent
+from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.core.utils.session_waiter import (
     SessionController,
     session_waiter,
 )
+from returns.result import Failure
 
-from alioth.utils.database import (
-    add_birthday,
-    list_birthdays,
-)
-from alioth.utils.initialize import initialize
+from alioth.utils import add_birthday, initialize, list_birthdays, send_message
 
 
 @dataclass(frozen=True)
@@ -69,7 +66,11 @@ def _get_due_birthdays(
 
 
 async def _send_notification(birthday: Birthday) -> None:
-    # TODO: 实际发送通知的占位
+    msg = MessageChain().message(birthday.message)
+    ret = await send_message(birthday.target_session, msg)
+    if isinstance(ret, Failure):
+        logger.error("发送失败：%s", ret.failure())
+
     logger.info(
         "[占位] 发送至 %s：今天是 %s 的生日 — %s",
         birthday.target_session,
@@ -100,10 +101,7 @@ async def run_daily_check(today: Optional[datetime] = None) -> None:
         return
 
     for birthday in due:
-        try:
-            await _send_notification(birthday)
-        except Exception:
-            logger.exception("发送失败：%s", birthday.name)
+        await _send_notification(birthday)
 
 
 @session_waiter(timeout=120, record_history_chains=False)
