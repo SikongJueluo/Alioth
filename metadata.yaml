@@ -1,6 +1,7 @@
-name: alioth # 插件唯一识别名，以 astrbot_plugin_ 前缀开头
-display_name: Alioth # 用于展示的名字，可以是方便人类阅读的名字（需要版本 >= v4.5.0，低版本不会报错，请放心填写）
-desc: AstrBot 插件示例。 # 插件简短描述
-version: v0.1.0 # 插件版本号。格式：v1.1.1 或者 v1.1
-author: SikongJueluo # 作者
-repo: https://github.com/SikongJueluo/Alioth # 插件的仓库地址
+name: astrbot_plugin_alioth
+display_name: Alioth
+desc: 玉衡，北斗七星之一，位于斗柄与斗勺连接处，主掌平衡与秩序。天文意象自带“天道”的公正感，意味兼顾群聊与服务器的“平衡性”管理工具。
+version: v0.1.0
+author: SikongJueluo
+astrbot_version: ">=4.22.1"
+repo: https://github.com/SikongJueluo/Alioth
