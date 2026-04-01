@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.core.utils.session_waiter import (
@@ -13,7 +15,14 @@ from astrbot.core.utils.session_waiter import (
 )
 from returns.result import Failure
 
-from alioth.utils import add_birthday, initialize, list_birthdays, send_message
+from alioth.utils import (
+    add_birthday,
+    initialize,
+    list_birthdays,
+    mark_birthday_sent,
+    send_message,
+    terminate,
+)
 
 
 @dataclass(frozen=True)
@@ -24,7 +33,10 @@ class Birthday:
     month: int
     day: int
     message: str
+    last_sent_date: Optional[str] = None
 
+
+_scheduler: Optional[AsyncIOScheduler] = None
 
 _reminder_state = {
     "name": None,
@@ -37,7 +49,24 @@ _reminder_state = {
 
 @initialize()
 async def _initialize_birthday_reminder():
+    global _scheduler
+    _scheduler = AsyncIOScheduler()
+    _scheduler.add_job(
+        run_daily_check,
+        CronTrigger(hour=8, minute=0),
+        id="daily_birthday_check",
+        replace_existing=True,
+    )
+    _scheduler.start()
     logger.info("生日提醒初始化成功...")
+
+
+@terminate()
+async def _terminate_birthday_reminder():
+    global _scheduler
+    if _scheduler is not None:
+        await _scheduler.shutdown(wait=False)
+        _scheduler = None
 
 
 def _is_valid_date(month_str: str, day_str: str) -> bool:
@@ -81,6 +110,7 @@ async def _send_notification(birthday: Birthday) -> None:
 
 async def run_daily_check(today: Optional[datetime] = None) -> None:
     today = today or datetime.now()
+    today_str = today.strftime("%Y-%m-%d")
 
     rows = await list_birthdays()
     birthdays = [
@@ -91,6 +121,7 @@ async def run_daily_check(today: Optional[datetime] = None) -> None:
             month=row["month"],
             day=row["day"],
             message=row["message"],
+            last_sent_date=row["last_sent_date"],
         )
         for row in rows
     ]
@@ -101,7 +132,16 @@ async def run_daily_check(today: Optional[datetime] = None) -> None:
         return
 
     for birthday in due:
+        if birthday.last_sent_date == today_str:
+            logger.info(
+                "跳过已发送的生日提醒: %s (last_sent=%s)",
+                birthday.name,
+                birthday.last_sent_date,
+            )
+            continue
+
         await _send_notification(birthday)
+        await mark_birthday_sent(birthday.id, today_str)
 
 
 @session_waiter(timeout=120, record_history_chains=False)

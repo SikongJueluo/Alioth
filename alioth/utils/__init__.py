@@ -1,5 +1,5 @@
 from alioth.utils.common import global_plugin_context
-from alioth.utils.database import add_birthday, list_birthdays
+from alioth.utils.database import add_birthday, list_birthdays, mark_birthday_sent
 from alioth.utils.initialize import (
     get_init_registry,
     initialize,
@@ -26,5 +26,6 @@ __all__ = [
     "send_message",
     "add_birthday",
     "list_birthdays",
+    "mark_birthday_sent",
     "global_plugin_context",
 ]

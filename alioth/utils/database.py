@@ -33,7 +33,8 @@ async def _create_tables():
             month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
             day INTEGER NOT NULL CHECK(day BETWEEN 1 AND 31),
             message TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            last_sent_date TEXT
         )
     """)
     await db.commit()
@@ -67,12 +68,21 @@ async def list_birthdays() -> List[aiosqlite.Row]:
     db = get_db()
     cursor = await db.execute(
         """
-        SELECT id, name, target_session, month, day, message
+        SELECT id, name, target_session, month, day, message, last_sent_date
         FROM birthdays
         ORDER BY month, day, id
         """
     )
     return list(await cursor.fetchall())
+
+
+async def mark_birthday_sent(birthday_id: int, date_str: str) -> None:
+    db = get_db()
+    await db.execute(
+        "UPDATE birthdays SET last_sent_date = ? WHERE id = ?",
+        (date_str, birthday_id),
+    )
+    await db.commit()
 
 
 async def delete_birthday(birthday_id: int) -> bool:
