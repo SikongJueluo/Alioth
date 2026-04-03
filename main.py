@@ -7,7 +7,7 @@ from alioth.utils import run_initializations_async
 from alioth.utils.common import initialize_utils_common
 
 
-@register("helloworld", "YourName", "一个简单的 Hello World 插件", "1.0.0")
+@register("alioth", "SikongJueluo", "一个简单的 Hello World 插件", "0.1.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)

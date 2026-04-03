@@ -3,7 +3,8 @@ from typing import List, Optional
 import aiosqlite
 
 from alioth.configs import config
-from alioth.utils import initialize, terminate
+from .initialize import initialize
+from .terminate import terminate
 
 _db: Optional[aiosqlite.Connection] = None
 

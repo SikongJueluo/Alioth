@@ -1,13 +1,13 @@
-from alioth.utils.common import global_plugin_context
-from alioth.utils.database import add_birthday, list_birthdays, mark_birthday_sent
-from alioth.utils.initialize import (
+from .common import get_plugin_context, get_plugin_context_unsafe
+from .database import add_birthday, list_birthdays, mark_birthday_sent
+from .initialize import (
     get_init_registry,
     initialize,
     run_initializations,
     run_initializations_async,
 )
-from alioth.utils.message import send_message
-from alioth.utils.terminate import (
+from .message import send_message
+from .terminate import (
     get_term_registry,
     run_terminations,
     run_terminations_async,
@@ -27,5 +27,6 @@ __all__ = [
     "add_birthday",
     "list_birthdays",
     "mark_birthday_sent",
-    "global_plugin_context",
+    "get_plugin_context",
+    "get_plugin_context_unsafe",
 ]
