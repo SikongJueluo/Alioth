@@ -1,4 +1,8 @@
-from .common import get_plugin_context, get_plugin_context_unsafe
+from .common import (
+    get_plugin_context,
+    get_plugin_context_unsafe,
+    initialize_utils_common,
+)
 from .database import add_birthday, list_birthdays, mark_birthday_sent
 from .initialize import (
     get_init_registry,
@@ -27,6 +31,7 @@ __all__ = [
     "add_birthday",
     "list_birthdays",
     "mark_birthday_sent",
+    "initialize_utils_common",
     "get_plugin_context",
     "get_plugin_context_unsafe",
 ]

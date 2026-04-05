@@ -1,5 +1,5 @@
 import inspect
-from typing import Union
+from typing import Any, Union, cast
 
 from astrbot.api.event import MessageChain
 from astrbot.core.platform.message_session import MessageSession
@@ -16,7 +16,7 @@ async def send_message(
     if context is Nothing:
         return Failure("No plugin context available")
 
-    context = context.unwrap()
+    context = cast(Any, context.unwrap())
 
     if not inspect.isfunction(context.star_context.send_message):
         return Failure("Context send_message is not a function")

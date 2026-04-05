@@ -1,13 +1,11 @@
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star
 
 from alioth.tools import add_birthday_reminder
-from alioth.utils import run_initializations_async
-from alioth.utils.common import initialize_utils_common
+from alioth.utils import initialize_utils_common, run_initializations_async
 
 
-@register("alioth", "SikongJueluo", "一个简单的 Hello World 插件", "0.1.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
