@@ -11,6 +11,7 @@ from .initialize import (
     run_initializations_async,
 )
 from .message import send_message
+from .metadata import PluginMetadata, plugin_metadata
 from .terminate import (
     get_term_registry,
     run_terminations,
@@ -34,4 +35,6 @@ __all__ = [
     "initialize_utils_common",
     "get_plugin_context",
     "get_plugin_context_unsafe",
+    "plugin_metadata",
+    "PluginMetadata",
 ]

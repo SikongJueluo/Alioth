@@ -34,8 +34,8 @@ def initialize_plugin_metadata() -> PluginMetadata:
             name=metadata["name"],
             author=metadata["author"],
             version=metadata["version"],
-            description=metadata["description"],
-            displayname=metadata["displayname"],
+            description=metadata["desc"],
+            displayname=metadata["display_name"],
             astrbot_version=metadata["astrbot_version"],
         )
         return plugin_metadata

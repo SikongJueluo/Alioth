@@ -2,8 +2,8 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star
 
-from alioth.tools import add_birthday_reminder
-from alioth.utils import initialize_utils_common, run_initializations_async
+from .alioth.tools import add_birthday_reminder
+from .alioth.utils import initialize_utils_common, run_initializations_async
 
 
 class MyPlugin(Star):

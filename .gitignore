@@ -136,7 +136,6 @@ celerybeat.pid
 
 # Environments
 .env
-.envrc
 .venv
 env/
 venv/
@@ -208,3 +207,6 @@ __marimo__/
 
 # AstrBot
 data/
+
+# AI
+.sisyphus/

@@ -3,6 +3,7 @@ from typing import List, Optional
 import aiosqlite
 
 from alioth.configs import config
+
 from .initialize import initialize
 from .terminate import terminate
 

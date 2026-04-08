@@ -6,7 +6,7 @@ from astrbot.core.platform.message_session import MessageSession
 from returns.maybe import Nothing
 from returns.result import Failure, Result, Success
 
-from alioth.utils import get_plugin_context
+from .common import get_plugin_context
 
 
 async def send_message(

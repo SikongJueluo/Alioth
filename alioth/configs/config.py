@@ -12,11 +12,9 @@ class AliothConfig(BaseModel):
     def plugin_data_path(self) -> Path:
         from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
-        from alioth.utils import get_plugin_context_unsafe
+        from alioth.utils import plugin_metadata
 
-        context = get_plugin_context_unsafe()
-
-        return Path(get_astrbot_data_path()) / "plugin_data" / context.plugin_name
+        return Path(get_astrbot_data_path()) / "plugin_data" / plugin_metadata.name
 
     @property
     def config_file_path(self) -> Path:
