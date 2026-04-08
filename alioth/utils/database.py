@@ -19,7 +19,9 @@ def get_db() -> aiosqlite.Connection:
 @initialize(priority=2)
 async def _init_database():
     global _db
-    db = await aiosqlite.connect(config.database_file_path)
+    database_file_path = config.database_file_path
+    database_file_path.parent.mkdir(parents=True, exist_ok=True)
+    db = await aiosqlite.connect(str(database_file_path))
     db.row_factory = aiosqlite.Row
     _db = db
     await _create_tables()

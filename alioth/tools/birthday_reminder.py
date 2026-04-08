@@ -38,6 +38,8 @@ class Birthday:
 
 _scheduler: Optional[AsyncIOScheduler] = None
 
+_INITIAL_PROMPT = "请提供寿星的名字："
+
 _reminder_state = {
     "name": None,
     "target_session": None,
@@ -47,25 +49,48 @@ _reminder_state = {
 }
 
 
-@initialize()
+def _reset_state() -> None:
+    _reminder_state["name"] = None
+    _reminder_state["target_session"] = None
+    _reminder_state["month"] = None
+    _reminder_state["day"] = None
+    _reminder_state["message"] = None
+
+
+async def start_birthday_reminder(event: AstrMessageEvent) -> None:
+    _reset_state()
+    try:
+        await event.send(event.plain_result(_INITIAL_PROMPT))
+        await add_birthday_reminder(event)
+    except Exception:
+        _reset_state()
+        raise
+
+
+async def add_birthday_reminder(event: AstrMessageEvent) -> None:
+    await _add_birthday_reminder_session_waiter(event)
+
+
+@initialize(priority=3)
 async def _initialize_birthday_reminder():
     global _scheduler
-    _scheduler = AsyncIOScheduler()
-    _scheduler.add_job(
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
         run_daily_check,
         CronTrigger(hour=8, minute=0),
         id="daily_birthday_check",
         replace_existing=True,
     )
-    _scheduler.start()
+    scheduler.start()
+    _scheduler = scheduler
     logger.info("生日提醒初始化成功...")
 
 
-@terminate()
+@terminate(priority=3)
 async def _terminate_birthday_reminder():
     global _scheduler
     if _scheduler is not None:
-        await _scheduler.shutdown(wait=False)
+        _scheduler.shutdown()
         _scheduler = None
 
 
@@ -144,8 +169,10 @@ async def run_daily_check(today: Optional[datetime] = None) -> None:
         await mark_birthday_sent(birthday.id, today_str)
 
 
-@session_waiter(timeout=120, record_history_chains=False)
-async def add_birthday_reminder(controller: SessionController, event: AstrMessageEvent):
+async def _add_birthday_reminder_session(
+    controller: SessionController,
+    event: AstrMessageEvent,
+) -> None:
     user_input = event.message_str.strip()
 
     if user_input == "退出":
@@ -155,7 +182,7 @@ async def add_birthday_reminder(controller: SessionController, event: AstrMessag
 
     if _reminder_state["name"] is None:
         if not user_input:
-            await event.send(event.plain_result("请提供寿星的名字："))
+            await event.send(event.plain_result(_INITIAL_PROMPT))
         else:
             _reminder_state["name"] = user_input
             await event.send(
@@ -210,6 +237,23 @@ async def add_birthday_reminder(controller: SessionController, event: AstrMessag
             month_str = _reminder_state["month"]
             day_str = _reminder_state["day"]
 
+            name = _reminder_state["name"]
+            target_session = _reminder_state["target_session"]
+
+            if (
+                name is None
+                or target_session is None
+                or month_str is None
+                or day_str is None
+            ):
+                logger.error(
+                    "生日提醒状态异常，保存时存在缺失字段: %s", _reminder_state
+                )
+                await event.send(event.plain_result("设置状态异常，请重新开始。"))
+                _reset_state()
+                controller.stop()
+                return
+
             if not _is_valid_date(month_str, day_str):
                 await event.send(
                     event.plain_result(
@@ -222,10 +266,10 @@ async def add_birthday_reminder(controller: SessionController, event: AstrMessag
 
             try:
                 row_id = await add_birthday(
-                    name=_reminder_state["name"],  # type: ignore[arg-type]
-                    target_session=_reminder_state["target_session"],  # type: ignore[arg-type]
-                    month=int(month_str),  # type: ignore[arg-type]
-                    day=int(day_str),  # type: ignore[arg-type]
+                    name=name,
+                    target_session=target_session,
+                    month=int(month_str),
+                    day=int(day_str),
                     message=user_input,
                 )
             except Exception:
@@ -257,9 +301,7 @@ async def add_birthday_reminder(controller: SessionController, event: AstrMessag
             controller.stop()
 
 
-def _reset_state():
-    _reminder_state["name"] = None
-    _reminder_state["target_session"] = None
-    _reminder_state["month"] = None
-    _reminder_state["day"] = None
-    _reminder_state["message"] = None
+_add_birthday_reminder_session_waiter = session_waiter(
+    timeout=120,
+    record_history_chains=False,
+)(_add_birthday_reminder_session)

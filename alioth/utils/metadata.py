@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
-from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 
 @dataclass
@@ -16,13 +15,12 @@ class PluginMetadata:
     astrbot_version: str
 
 
+def _plugin_root_path() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
 def initialize_plugin_metadata() -> PluginMetadata:
-    metadata_filepath = (
-        Path(get_astrbot_data_path())
-        / "plugins"
-        / "astrbot_plugin_alioth"
-        / "metadata.yaml"
-    )
+    metadata_filepath = _plugin_root_path() / "metadata.yaml"
     if not metadata_filepath.exists():
         raise FileNotFoundError(f"metadata.yaml not found at {metadata_filepath}")
 
