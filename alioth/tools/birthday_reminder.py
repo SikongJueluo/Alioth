@@ -17,6 +17,7 @@ from returns.result import Failure
 
 from alioth.utils import (
     add_birthday,
+    get_plugin_context_unsafe,
     initialize,
     list_birthdays,
     mark_birthday_sent,
@@ -59,25 +60,28 @@ def _reset_state() -> None:
 
 async def start_birthday_reminder(event: AstrMessageEvent) -> None:
     _reset_state()
+    ctx = get_plugin_context_unsafe()
+    timeout = ctx.config.get("session_timeout", 120)
+    waiter = session_waiter(timeout=timeout, record_history_chains=False)
+    wrapped_session = waiter(_add_birthday_reminder_session)
     try:
         await event.send(event.plain_result(_INITIAL_PROMPT))
-        await add_birthday_reminder(event)
+        await wrapped_session(event)
     except Exception:
         _reset_state()
         raise
 
 
-async def add_birthday_reminder(event: AstrMessageEvent) -> None:
-    await _add_birthday_reminder_session_waiter(event)
-
-
 @initialize(priority=3)
 async def _initialize_birthday_reminder():
     global _scheduler
+    ctx = get_plugin_context_unsafe()
+    hour = ctx.config.get("check_hour", 8)
+    minute = ctx.config.get("check_minute", 0)
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         run_daily_check,
-        CronTrigger(hour=8, minute=0),
+        CronTrigger(hour=hour, minute=minute),
         id="daily_birthday_check",
         replace_existing=True,
     )
@@ -173,6 +177,8 @@ async def _add_birthday_reminder_session(
     controller: SessionController,
     event: AstrMessageEvent,
 ) -> None:
+    ctx = get_plugin_context_unsafe()
+    keep_timeout = ctx.config.get("session_timeout", 120)
     user_input = event.message_str.strip()
 
     if user_input == "退出":
@@ -190,7 +196,7 @@ async def _add_birthday_reminder_session(
                     f"已记录名字: {user_input}\n请提供发送提醒的对话窗口ID："
                 )
             )
-        controller.keep(timeout=120, reset_timeout=True)
+        controller.keep(timeout=keep_timeout, reset_timeout=True)
         return
 
     if _reminder_state["target_session"] is None:
@@ -203,7 +209,7 @@ async def _add_birthday_reminder_session(
                     f"已记录对话窗口: {user_input}\n请提供生日月份（1-12）："
                 )
             )
-        controller.keep(timeout=120, reset_timeout=True)
+        controller.keep(timeout=keep_timeout, reset_timeout=True)
         return
 
     if _reminder_state["month"] is None:
@@ -216,7 +222,7 @@ async def _add_birthday_reminder_session(
                     f"已记录月份: {user_input}\n请提供生日日期（1-31）："
                 )
             )
-        controller.keep(timeout=120, reset_timeout=True)
+        controller.keep(timeout=keep_timeout, reset_timeout=True)
         return
 
     if _reminder_state["day"] is None:
@@ -227,7 +233,7 @@ async def _add_birthday_reminder_session(
             await event.send(
                 event.plain_result(f"已记录日期: {user_input}\n请提供生日祝福话语：")
             )
-        controller.keep(timeout=120, reset_timeout=True)
+        controller.keep(timeout=keep_timeout, reset_timeout=True)
         return
 
     if _reminder_state["message"] is None:
@@ -299,9 +305,3 @@ async def _add_birthday_reminder_session(
 
             _reset_state()
             controller.stop()
-
-
-_add_birthday_reminder_session_waiter = session_waiter(
-    timeout=120,
-    record_history_chains=False,
-)(_add_birthday_reminder_session)

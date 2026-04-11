@@ -1,0 +1,20 @@
+{
+  "check_hour": {
+    "description": "每日检查时间（小时，0-23）",
+    "type": "int",
+    "hint": "每天什么时间检查并发送生日提醒",
+    "default": 8
+  },
+  "check_minute": {
+    "description": "每日检查时间（分钟，0-59）",
+    "type": "int",
+    "hint": "每天什么时间检查并发送生日提醒",
+    "default": 0
+  },
+  "session_timeout": {
+    "description": "对话设置超时时间（秒）",
+    "type": "int",
+    "hint": "交互式设置生日提醒时，多久无操作自动退出",
+    "default": 120
+  }
+}

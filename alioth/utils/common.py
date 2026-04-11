@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from astrbot.api import AstrBotConfig
 from astrbot.api.star import Star
 from returns.maybe import Maybe
 
@@ -8,14 +9,15 @@ from returns.maybe import Maybe
 @dataclass
 class PluginContext:
     star_context: Star._ContextLike
+    config: AstrBotConfig
 
 
 _plugin_context: Optional[PluginContext] = None
 
 
-def initialize_utils_common(context: Star._ContextLike):
+def initialize_utils_common(context: Star._ContextLike, config: AstrBotConfig):
     global _plugin_context
-    _plugin_context = PluginContext(star_context=context)
+    _plugin_context = PluginContext(star_context=context, config=config)
 
 
 def get_plugin_context() -> Maybe[PluginContext]:
