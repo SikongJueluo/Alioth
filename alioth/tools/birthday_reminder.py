@@ -40,6 +40,7 @@ class Birthday:
 _scheduler: Optional[AsyncIOScheduler] = None
 
 _INITIAL_PROMPT = "请提供寿星的名字："
+_TARGET_SESSION_PROMPT = "请提供发送提醒的会话标识（unified_msg_origin，例如 aiocqhttp:GroupMessage:123456）："
 
 _reminder_state = {
     "name": None,
@@ -193,7 +194,7 @@ async def _add_birthday_reminder_session(
             _reminder_state["name"] = user_input
             await event.send(
                 event.plain_result(
-                    f"已记录名字: {user_input}\n请提供发送提醒的对话窗口ID："
+                    f"已记录名字: {user_input}\n{_TARGET_SESSION_PROMPT}"
                 )
             )
         controller.keep(timeout=keep_timeout, reset_timeout=True)
@@ -201,12 +202,12 @@ async def _add_birthday_reminder_session(
 
     if _reminder_state["target_session"] is None:
         if not user_input:
-            await event.send(event.plain_result("请提供发送提醒的对话窗口ID："))
+            await event.send(event.plain_result(_TARGET_SESSION_PROMPT))
         else:
             _reminder_state["target_session"] = user_input
             await event.send(
                 event.plain_result(
-                    f"已记录对话窗口: {user_input}\n请提供生日月份（1-12）："
+                    f"已记录会话标识: {user_input}\n请提供生日月份（1-12）："
                 )
             )
         controller.keep(timeout=keep_timeout, reset_timeout=True)

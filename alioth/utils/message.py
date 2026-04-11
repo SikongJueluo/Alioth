@@ -1,5 +1,4 @@
-import inspect
-from typing import Any, Union, cast
+from typing import Union
 
 from astrbot.api.event import MessageChain
 from astrbot.core.platform.message_session import MessageSession
@@ -16,10 +15,15 @@ async def send_message(
     if context is Nothing:
         return Failure("No plugin context available")
 
-    context = cast(Any, context.unwrap())
+    star_context = context.unwrap().star_context
+    try:
+        delivered = await star_context.send_message(session, msg)
+    except ValueError as exc:
+        return Failure(f"Invalid session: {exc}")
+    except Exception as exc:
+        return Failure(f"Send message failed: {exc}")
 
-    if not inspect.isfunction(context.star_context.send_message):
-        return Failure("Context send_message is not a function")
+    if not delivered:
+        return Failure(f"No platform found for session: {session}")
 
-    await context.send_message(str(session), msg)
     return Success(True)
