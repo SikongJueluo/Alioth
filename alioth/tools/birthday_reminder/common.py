@@ -5,7 +5,7 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
@@ -32,21 +32,45 @@ class Birthday:
 _INITIAL_PROMPT = "请提供寿星的名字："
 _TARGET_SESSION_PROMPT = "请提供发送提醒的会话标识（unified_msg_origin，例如 aiocqhttp:GroupMessage:123456）："
 
-_reminder_state = {
-    "name": None,
-    "target_session": None,
-    "month": None,
-    "day": None,
-    "message": None,
-}
+
+class ReminderState(TypedDict):
+    name: str | None
+    target_session: str | None
+    month: str | None
+    day: str | None
+    message: str | None
 
 
-def _reset_state() -> None:
-    _reminder_state["name"] = None
-    _reminder_state["target_session"] = None
-    _reminder_state["month"] = None
-    _reminder_state["day"] = None
-    _reminder_state["message"] = None
+def _new_state() -> ReminderState:
+    return {
+        "name": None,
+        "target_session": None,
+        "month": None,
+        "day": None,
+        "message": None,
+    }
+
+
+_reminder_states: dict[str, ReminderState] = {}
+
+
+def _has_active_state(session_key: str) -> bool:
+    state = _reminder_states.get(session_key)
+    if state is None:
+        return False
+    return any(value is not None for value in state.values())
+
+
+def _get_state(session_key: str) -> ReminderState:
+    state = _reminder_states.get(session_key)
+    if state is None:
+        state = _new_state()
+        _reminder_states[session_key] = state
+    return state
+
+
+def _reset_state(session_key: str) -> None:
+    _reminder_states.pop(session_key, None)
 
 
 def _is_valid_date(month_str: str, day_str: str) -> bool:
