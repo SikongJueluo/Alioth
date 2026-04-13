@@ -38,18 +38,7 @@ async def list_birthdays() -> List[Birthday]:
         """
     )
     rows = await cursor.fetchall()
-    return [
-        Birthday(
-            id=row["id"],
-            name=row["name"],
-            target_session=row["target_session"],
-            month=row["month"],
-            day=row["day"],
-            message=row["message"],
-            last_sent_date=row["last_sent_date"],
-        )
-        for row in rows
-    ]
+    return [Birthday.model_validate(dict(row)) for row in rows]
 
 
 async def mark_birthday_sent(birthday_id: int, date_str: str) -> None:

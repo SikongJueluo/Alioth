@@ -16,8 +16,8 @@ _scheduler: Optional[AsyncIOScheduler] = None
 @initialize(priority=3)
 async def initialize_birthday_reminder(ctx: InitializationContext) -> None:
     global _scheduler
-    hour = ctx.config.get("check_hour", 8)
-    minute = ctx.config.get("check_minute", 0)
+    hour = ctx.config.check_hour
+    minute = ctx.config.check_minute
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         run_daily_check,

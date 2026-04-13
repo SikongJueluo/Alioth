@@ -18,15 +18,17 @@ from alioth.birthday_reminder import (
 from alioth.infrastructure import (
     InitializationContext,
     initialize_plugin_context,
+    parse_plugin_config,
     run_initializations_async,
     run_terminations_async,
 )
+from alioth.infrastructure.config import PluginConfig
 
 
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
-        self.config = config
+        self.config: PluginConfig = parse_plugin_config(config)
         register_llm_tools(context)
 
     async def initialize(self):

@@ -5,14 +5,17 @@ from astrbot.api.star import Context
 from astrbot.core.agent.run_context import ContextWrapper
 from astrbot.core.agent.tool import FunctionTool, ToolExecResult
 from astrbot.core.astr_agent_context import AstrAgentContext
+from typing import Any
 
 # pyright: reportMissingImports=false
 from pydantic import Field
+from pydantic import ValidationError
 from pydantic.dataclasses import dataclass
 
 from alioth.birthday_reminder.application.reminder_service import (
     create_birthday_reminder,
 )
+from alioth.birthday_reminder.domain.models import BirthdayReminderInput
 from alioth.birthday_reminder.domain.prompts import build_creation_confirmation
 
 
@@ -20,7 +23,7 @@ from alioth.birthday_reminder.domain.prompts import build_creation_confirmation
 class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
     name: str = "alioth_add_birthday"
     description: str = "添加一个生日提醒记录。需要提供寿星姓名、目标会话标识、生日月份、生日日期和祝福语。"
-    parameters: dict = Field(
+    parameters: dict[str, Any] = Field(
         default_factory=lambda: {
             "type": "object",
             "properties": {
@@ -51,18 +54,16 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
         del context
 
         try:
-            name = _require_non_empty_string(kwargs, "name")
-            target_session = _require_non_empty_string(kwargs, "target_session")
-            message = _require_non_empty_string(kwargs, "message")
-            month = _parse_int(kwargs, "month")
-            day = _parse_int(kwargs, "day")
+            payload = BirthdayReminderInput.model_validate(kwargs)
             row_id = await create_birthday_reminder(
-                name=name,
-                target_session=target_session,
-                month=month,
-                day=day,
-                message=message,
+                name=payload.name,
+                target_session=payload.target_session,
+                month=payload.month,
+                day=payload.day,
+                message=payload.message,
             )
+        except ValidationError as exc:
+            return _format_validation_error(exc)
         except ValueError as exc:
             return str(exc)
         except Exception:
@@ -71,36 +72,29 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
 
         logger.info(
             "LLM 工具已保存生日提醒: name=%s target=%s %s月%s日 (row_id=%d)",
-            name,
-            target_session,
-            month,
-            day,
+            payload.name,
+            payload.target_session,
+            payload.month,
+            payload.day,
             row_id,
         )
-        return f"记录 ID: {row_id}\n{build_creation_confirmation(name, target_session, month, day, message)}"
+        return (
+            f"记录 ID: {row_id}\n"
+            f"{build_creation_confirmation(payload.name, payload.target_session, payload.month, payload.day, payload.message)}"
+        )
 
 
 def register_llm_tools(context: Context) -> None:
     context.add_llm_tools(AddBirthdayReminderTool())
 
 
-def _require_non_empty_string(kwargs: dict[str, object], key: str) -> str:
-    value = kwargs.get(key)
-    if not isinstance(value, str):
-        raise ValueError(f"参数 {key} 必须是非空字符串。")
+def _format_validation_error(exc: ValidationError) -> str:
+    error = exc.errors()[0]
+    location = error.get("loc", ())
+    field_name = str(location[0]) if location else "参数"
+    error_type = error.get("type")
 
-    normalized = value.strip()
-    if not normalized:
-        raise ValueError(f"参数 {key} 必须是非空字符串。")
-    return normalized
+    if error_type == "missing":
+        return f"参数 {field_name} 为必填项。"
 
-
-def _parse_int(kwargs: dict[str, object], key: str) -> int:
-    value = kwargs.get(key)
-    if isinstance(value, bool):
-        raise ValueError(f"参数 {key} 必须是整数。")
-
-    try:
-        return int(str(value))
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"参数 {key} 必须是整数。") from exc
+    return f"参数 {field_name}{error['msg']}"

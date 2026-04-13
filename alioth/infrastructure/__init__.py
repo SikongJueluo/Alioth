@@ -4,6 +4,7 @@ from .context import (
     get_plugin_context_unsafe,
     initialize_plugin_context,
 )
+from .config import PluginConfig, parse_plugin_config
 from .database import add_birthday, delete_birthday, list_birthdays, mark_birthday_sent
 from .initialization import (
     InitializationContext,
@@ -23,6 +24,7 @@ from .termination import (
 
 __all__ = [
     "PluginContext",
+    "PluginConfig",
     "PluginMetadata",
     "InitializationContext",
     "add_birthday",
@@ -36,6 +38,7 @@ __all__ = [
     "list_birthdays",
     "mark_birthday_sent",
     "plugin_metadata",
+    "parse_plugin_config",
     "run_initializations",
     "run_initializations_async",
     "run_terminations",

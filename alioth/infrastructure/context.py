@@ -1,21 +1,22 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from astrbot.api import AstrBotConfig
 from astrbot.api.star import Context
 from returns.maybe import Maybe
+
+from .config import PluginConfig
 
 
 @dataclass
 class PluginContext:
     star_context: Context
-    config: AstrBotConfig
+    config: PluginConfig
 
 
 _plugin_context: Optional[PluginContext] = None
 
 
-def initialize_plugin_context(context: Context, config: AstrBotConfig) -> None:
+def initialize_plugin_context(context: Context, config: PluginConfig) -> None:
     global _plugin_context
     _plugin_context = PluginContext(star_context=context, config=config)
 

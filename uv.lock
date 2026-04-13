@@ -145,6 +145,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "astrbot" },
+    { name = "pydantic" },
     { name = "returns", extra = ["compatible-mypy"] },
 ]
 
@@ -156,6 +157,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "astrbot", specifier = ">=4.22.1" },
+    { name = "pydantic", specifier = ">=2.0.0" },
     { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.26.0" },
 ]
 
