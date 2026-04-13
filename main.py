@@ -9,7 +9,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from alioth.tools import start_birthday_reminder
+from alioth.tools import AddBirthdayReminderTool, start_birthday_reminder
 from alioth.utils import (
     initialize_utils_common,
     run_initializations_async,
@@ -21,6 +21,7 @@ class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
+        self.context.add_llm_tools(AddBirthdayReminderTool())
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
