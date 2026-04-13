@@ -12,13 +12,12 @@ if str(PLUGIN_ROOT) not in sys.path:
 
 from alioth.birthday_reminder import (
     handle_birthday_reminder_command,
-    register_llm_tools,
 )
-
 from alioth.infrastructure import (
     InitializationContext,
     initialize_plugin_context,
     parse_plugin_config,
+    register_all_llm_tools,
     run_initializations_async,
     run_terminations_async,
 )
@@ -28,14 +27,15 @@ from alioth.infrastructure.config import PluginConfig
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
+        self.context = cast(Context, self.context)
         self.config: PluginConfig = parse_plugin_config(config)
-        register_llm_tools(context)
+
+        initialize_plugin_context(self.context, self.config)
+        register_all_llm_tools(context)
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
         self.context = cast(Context, self.context)
-        initialize_plugin_context(self.context, self.config)
-
         init_ctx = InitializationContext(star_context=self.context, config=self.config)
         await run_initializations_async(init_ctx)
 

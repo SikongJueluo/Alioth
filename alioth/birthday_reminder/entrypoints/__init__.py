@@ -1,8 +1,7 @@
 from .command import handle_birthday_reminder_command
-from .tool import AddBirthdayReminderTool, register_llm_tools
+from .tool import AddBirthdayReminderTool
 
 __all__ = [
     "AddBirthdayReminderTool",
     "handle_birthday_reminder_command",
-    "register_llm_tools",
 ]

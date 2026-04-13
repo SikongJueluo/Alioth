@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from astrbot.api import logger
-from astrbot.api.star import Context
 from astrbot.core.agent.run_context import ContextWrapper
 from astrbot.core.agent.tool import FunctionTool, ToolExecResult
 from astrbot.core.astr_agent_context import AstrAgentContext
@@ -17,8 +16,10 @@ from alioth.birthday_reminder.application.reminder_service import (
 )
 from alioth.birthday_reminder.domain.models import BirthdayReminderInput
 from alioth.birthday_reminder.domain.prompts import build_creation_confirmation
+from alioth.infrastructure import llm_tool
 
 
+@llm_tool()
 @dataclass
 class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
     name: str = "alioth_add_birthday"
@@ -82,10 +83,6 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
             f"记录 ID: {row_id}\n"
             f"{build_creation_confirmation(payload.name, payload.target_session, payload.month, payload.day, payload.message)}"
         )
-
-
-def register_llm_tools(context: Context) -> None:
-    context.add_llm_tools(AddBirthdayReminderTool())
 
 
 def _format_validation_error(exc: ValidationError) -> str:
