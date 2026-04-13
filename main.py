@@ -2,7 +2,8 @@ import sys
 from pathlib import Path
 from typing import cast
 
-from astrbot.api import AstrBotConfig, logger
+# pyright: reportMissingImports=false
+from astrbot.api import AstrBotConfig
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star
 
@@ -11,7 +12,9 @@ if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
 from alioth.birthday_reminder import (
-    handle_birthday_reminder_command,
+    handle_birthday_reminder_create_command,
+    handle_birthday_reminder_delete_command,
+    handle_birthday_reminder_list_command,
 )
 from alioth.infrastructure import (
     InitializationContext,
@@ -39,18 +42,25 @@ class MyPlugin(Star):
         init_ctx = InitializationContext(star_context=self.context, config=self.config)
         await run_initializations_async(init_ctx)
 
-    @filter.command("BirthdayReminder")
-    async def birthday_reminder(self, event: AstrMessageEvent):
-        """生日提醒"""
-        try:
-            await handle_birthday_reminder_command(event)
-        except TimeoutError:
-            yield event.plain_result("设置超时，已退出生日提醒设置~")
-        except Exception as e:
-            logger.exception("生日提醒设置异常")
-            yield event.plain_result(f"发生错误: {e}")
-        finally:
-            event.stop_event()
+    @filter.command_group("birthday", alias={"bday"})
+    def birthday(self) -> None:
+        """生日提醒管理"""
+
+    @birthday.command("add")
+    async def birthday_add(self, event: AstrMessageEvent) -> None:
+        await handle_birthday_reminder_create_command(event)
+
+    @birthday.command("list")
+    async def birthday_list(self, event: AstrMessageEvent) -> None:
+        await handle_birthday_reminder_list_command(event)
+
+    @birthday.command("delete")
+    async def birthday_delete(
+        self,
+        event: AstrMessageEvent,
+        birthday_id: int,
+    ) -> None:
+        await handle_birthday_reminder_delete_command(event, birthday_id)
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""

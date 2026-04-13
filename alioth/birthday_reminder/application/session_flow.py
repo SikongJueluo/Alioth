@@ -6,7 +6,7 @@ from astrbot.api.event import AstrMessageEvent
 from astrbot.core.utils.session_waiter import SessionController, session_waiter
 from pydantic import ValidationError
 
-from alioth.birthday_reminder.domain.models import BirthdayReminderInput
+from alioth.birthday_reminder.domain.models import CreateBirthdayReminderInput
 from alioth.birthday_reminder.domain.prompts import (
     INITIAL_PROMPT,
     TARGET_SESSION_PROMPT,
@@ -153,7 +153,7 @@ async def _add_birthday_reminder_session(
         return
 
     try:
-        payload = BirthdayReminderInput.model_validate(
+        payload = CreateBirthdayReminderInput.model_validate(
             {
                 "name": name,
                 "target_session": target_session,
