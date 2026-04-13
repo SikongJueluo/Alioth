@@ -7,21 +7,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from astrbot.api import logger
 
-from alioth.utils import (
-    get_plugin_context_unsafe,
-    initialize,
-    terminate,
-)
-
-from .common import run_daily_check
+from alioth.birthday_reminder.application.reminder_service import run_daily_check
+from alioth.infrastructure import InitializationContext, initialize, terminate
 
 _scheduler: Optional[AsyncIOScheduler] = None
 
 
 @initialize(priority=3)
-async def _initialize_birthday_reminder():
+async def initialize_birthday_reminder(ctx: InitializationContext) -> None:
     global _scheduler
-    ctx = get_plugin_context_unsafe()
     hour = ctx.config.get("check_hour", 8)
     minute = ctx.config.get("check_minute", 0)
     scheduler = AsyncIOScheduler()
@@ -37,7 +31,7 @@ async def _initialize_birthday_reminder():
 
 
 @terminate(priority=3)
-async def _terminate_birthday_reminder():
+async def terminate_birthday_reminder() -> None:
     global _scheduler
     if _scheduler is not None:
         _scheduler.shutdown()

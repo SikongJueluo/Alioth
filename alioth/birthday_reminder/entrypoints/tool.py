@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from astrbot.api import logger
+from astrbot.api.star import Context
 from astrbot.core.agent.run_context import ContextWrapper
 from astrbot.core.agent.tool import FunctionTool, ToolExecResult
 from astrbot.core.astr_agent_context import AstrAgentContext
@@ -9,9 +10,10 @@ from astrbot.core.astr_agent_context import AstrAgentContext
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
-from alioth.utils import add_birthday
-
-from .common import _is_valid_date
+from alioth.birthday_reminder.application.reminder_service import (
+    create_birthday_reminder,
+)
+from alioth.birthday_reminder.domain.prompts import build_creation_confirmation
 
 
 @dataclass
@@ -22,10 +24,7 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
         default_factory=lambda: {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "寿星姓名。",
-                },
+                "name": {"type": "string", "description": "寿星姓名。"},
                 "target_session": {
                     "type": "string",
                     "description": (
@@ -33,25 +32,21 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
                         "aiocqhttp:GroupMessage:123456。"
                     ),
                 },
-                "month": {
-                    "type": "integer",
-                    "description": "生日月份，范围 1 到 12。",
-                },
+                "month": {"type": "integer", "description": "生日月份，范围 1 到 12。"},
                 "day": {
                     "type": "integer",
                     "description": "生日日期，范围 1 到 31，会按自然日期校验。",
                 },
-                "message": {
-                    "type": "string",
-                    "description": "生日当天发送的祝福语。",
-                },
+                "message": {"type": "string", "description": "生日当天发送的祝福语。"},
             },
             "required": ["name", "target_session", "month", "day", "message"],
         }
     )
 
     async def call(
-        self, context: ContextWrapper[AstrAgentContext], **kwargs: object
+        self,
+        context: ContextWrapper[AstrAgentContext],
+        **kwargs: object,
     ) -> ToolExecResult:
         del context
 
@@ -61,20 +56,15 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
             message = _require_non_empty_string(kwargs, "message")
             month = _parse_int(kwargs, "month")
             day = _parse_int(kwargs, "day")
-        except ValueError as exc:
-            return str(exc)
-
-        if not _is_valid_date(str(month), str(day)):
-            return f"日期无效：{month}月{day}日不存在，请提供合法日期。"
-
-        try:
-            row_id = await add_birthday(
+            row_id = await create_birthday_reminder(
                 name=name,
                 target_session=target_session,
                 month=month,
                 day=day,
                 message=message,
             )
+        except ValueError as exc:
+            return str(exc)
         except Exception:
             logger.exception("LLM 工具保存生日提醒失败")
             return "保存生日提醒失败，请稍后重试。"
@@ -87,14 +77,11 @@ class AddBirthdayReminderTool(FunctionTool[AstrAgentContext]):
             day,
             row_id,
         )
-        return (
-            "生日提醒已添加成功。\n"
-            f"记录 ID: {row_id}\n"
-            f"名字: {name}\n"
-            f"发送至: {target_session}\n"
-            f"生日: {month}月{day}日\n"
-            f"祝福: {message}"
-        )
+        return f"记录 ID: {row_id}\n{build_creation_confirmation(name, target_session, month, day, message)}"
+
+
+def register_llm_tools(context: Context) -> None:
+    context.add_llm_tools(AddBirthdayReminderTool())
 
 
 def _require_non_empty_string(kwargs: dict[str, object], key: str) -> str:

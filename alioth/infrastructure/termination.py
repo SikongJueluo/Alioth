@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Callable, List, Optional, TypeVar, cast
 
 
-class InitializationRegistry:
+class TerminationRegistry:
     def __init__(self):
         self._functions: List[Callable] = []
 
@@ -14,53 +14,54 @@ class InitializationRegistry:
     def _sorted_functions(self) -> List[Callable]:
         return sorted(
             self._functions,
-            key=lambda func: getattr(func, "_init_priority", 0),
+            key=lambda func: getattr(func, "_term_priority", 0),
+            reverse=True,
         )
 
-    def run_all(self):
+    def run_all(self) -> None:
         for func in self._sorted_functions():
             if inspect.iscoroutinefunction(func):
                 raise RuntimeError(
-                    "Async initializer registered in synchronous run_all(); "
+                    "Async terminator registered in synchronous run_all(); "
                     "use run_all_async instead."
                 )
             func()
 
-    async def run_all_async(self):
+    async def run_all_async(self) -> None:
         for func in self._sorted_functions():
             result = func()
             if inspect.isawaitable(result):
                 await result
 
-    def clear(self):
+    def clear(self) -> None:
         self._functions.clear()
 
     def __iter__(self):
         return iter(self._sorted_functions())
 
 
-_init_registry = InitializationRegistry()
+_term_registry = TerminationRegistry()
 F = TypeVar("F", bound=Callable)
 
 
-def initialize(name: Optional[str] = None, priority: int = 0):
+def terminate(name: Optional[str] = None, priority: int = 0):
     def decorator(func: F) -> F:
         wrapped = cast(F, wraps(func)(func))
-        wrapped._init_name = name or func.__name__  # type: ignore[reportFunctionMemberAccess]
-        wrapped._init_priority = priority  # type: ignore[reportFunctionMemberAccess]
-        _init_registry.register(wrapped)
+        wrapped._term_name = name or func.__name__  # type: ignore[reportFunctionMemberAccess]
+        wrapped._term_priority = priority  # type: ignore[reportFunctionMemberAccess]
+        _term_registry.register(wrapped)
         return wrapped
 
     return decorator
 
 
-def get_init_registry() -> InitializationRegistry:
-    return _init_registry
+def get_term_registry() -> TerminationRegistry:
+    return _term_registry
 
 
-def run_initializations():
-    _init_registry.run_all()
+def run_terminations() -> None:
+    _term_registry.run_all()
 
 
-async def run_initializations_async():
-    await _init_registry.run_all_async()
+async def run_terminations_async() -> None:
+    await _term_registry.run_all_async()

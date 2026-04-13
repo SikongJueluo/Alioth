@@ -15,23 +15,16 @@ class PluginContext:
 _plugin_context: Optional[PluginContext] = None
 
 
-def initialize_utils_common(context: Context, config: AstrBotConfig):
+def initialize_plugin_context(context: Context, config: AstrBotConfig) -> None:
     global _plugin_context
     _plugin_context = PluginContext(star_context=context, config=config)
 
 
 def get_plugin_context() -> Maybe[PluginContext]:
-    """
-    Get the plugin context.
-    """
     return Maybe.from_optional(_plugin_context)
 
 
 def get_plugin_context_unsafe() -> PluginContext:
-    """
-    Usually use in initialize function
-    Raise ValueError when common utils are not initialized
-    """
     if _plugin_context is None:
         raise ValueError("plugin context not initialized")
     return _plugin_context

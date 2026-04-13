@@ -5,11 +5,12 @@ from astrbot.core.platform.message_session import MessageSession
 from returns.maybe import Nothing
 from returns.result import Failure, Result, Success
 
-from .common import get_plugin_context
+from .context import get_plugin_context
 
 
 async def send_message(
-    session: Union[MessageSession, str], msg: MessageChain
+    session: Union[MessageSession, str],
+    msg: MessageChain,
 ) -> Result[bool, str]:
     context = get_plugin_context()
     if context is Nothing:
