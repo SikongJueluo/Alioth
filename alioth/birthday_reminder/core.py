@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 # pyright: reportMissingImports=false
-
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -13,8 +12,8 @@ from alioth.utils import (
     initialize,
     terminate,
 )
-from alioth.tools.birthday_reminder.common import run_daily_check
 
+from .common import run_daily_check
 
 _scheduler: Optional[AsyncIOScheduler] = None
 

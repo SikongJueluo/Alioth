@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 # pyright: reportMissingImports=false
-
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent
 from astrbot.core.utils.session_waiter import (
@@ -13,7 +12,8 @@ from alioth.utils import (
     add_birthday,
     get_plugin_context_unsafe,
 )
-from alioth.tools.birthday_reminder.common import (
+
+from .common import (
     _INITIAL_PROMPT,
     _TARGET_SESSION_PROMPT,
     _get_state,
