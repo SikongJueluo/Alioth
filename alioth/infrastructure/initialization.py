@@ -1,7 +1,6 @@
 import inspect
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from functools import wraps
 from typing import Protocol, TypeVar, cast
 
 # pyright: reportMissingImports=false
@@ -95,7 +94,7 @@ F = TypeVar("F", bound=Callable[..., object])
 
 def initialize(name: str | None = None, priority: int = 0) -> Callable[[F], F]:
     def decorator(func: F) -> F:
-        wrapped = cast(InitializerWithMetadata, cast(object, wraps(func)(func)))
+        wrapped = cast(InitializerWithMetadata, cast(object, func))
         wrapped._init_name = name or func.__name__
         wrapped._init_priority = priority
         _init_registry.register(wrapped)
